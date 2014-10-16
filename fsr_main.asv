@@ -1,0 +1,25 @@
+function [X] = fsr_main(Y, A, D, L, sc)
+
+% ---------------------------------------------------
+% Fast Sparse Coding: FSC main 
+% Functionality: 
+%       find the approaximated sparse solution x of the linear system y=Ax
+% Dimension: m --- number of measurement
+%            Nt--- number of testing samples
+%            Nd--- number of training samples
+%
+%                 Dimension          Description
+% input:  Y          m x Nt        --- the testing data
+%         A          m x Nd        --- the training data
+%         D          m x K         --- the learned dictionary
+%         L                        --- the number of atoms in OMP
+%         sc                       --- the sparse coding algorithm
+% output: X          Nd x Nt       --- the sparse coefficient matrix of Y
+%         
+% ---------------------------------------------------
+
+
+
+
+
+end

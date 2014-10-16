@@ -1,0 +1,17 @@
+function [pTestLabel] = labelPrediction(X, trainLabel, numClass, trainSample, testSample)
+    [Nd, Nt] = size(X);
+    pTestLabel = zeros(1, Nt);
+    
+    for indTestSample =1: Nt
+    
+    residuals = zeros(1,numClass); 
+    for iClass = 1: numClass
+        xpClass = X(:,indTestSample);
+        xpClass(find(trainLabel~= iClass))=0;
+        residuals(iClass) = norm(testSample(:,indTestSample)- trainSample*xpClass);
+    end
+    [val, ind] = min(residuals);
+    pTestLabel(indTestSample)= ind;
+    
+    end
+end

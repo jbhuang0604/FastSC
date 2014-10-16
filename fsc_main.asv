@@ -1,0 +1,85 @@
+function [X, accuracy, avgTime] = fsc_main(Y, A, D, L, sc_algo, trainLabel, testLabel, numClass)
+
+% ---------------------------------------------------
+% Fast Sparse Coding: FSC main 
+% Functionality: 
+%       find the approaximated sparse solution x of the linear system y=Ax
+% Dimension: m --- number of measurement
+%            Nt--- number of testing samples
+%            Nd--- number of training samples
+%
+%                   Dimension          Description
+% input:  Y          m x Nt        --- the testing data
+%         A          m x Nd        --- the training data
+%         D          m x K         --- the learned dictionary
+%         trainLabel 1 x Nt        --- the label of training sample
+%         L                        --- the number of atoms in OMP
+%         sc_algo                  --- the sparse coding algorithm
+%          e.g., l1magic, SparseLab, fast_sc, SL0, YALL1
+% output: X          K x Nt       --- the sparse coefficient matrix of Y
+%         
+% Reference: Jia-Bin Huang and Ming-Hsuan Yang, "Fast Sparse Representation with Prototypes.", the 23th IEEE Conference
+%            on Computer Vision and Pattern Recognition (CVPR 10'), San Francisco, CA, USA, June 2010.
+% ---------------------------------------------------
+
+[m Nt]= size(Y);
+[m Nd]= size(A);
+[m K]= size(D);
+
+X = zeros(Nd, Nt);
+
+% Compute the new representation of A as W
+WA = OMP(D, A, L);
+% WA =full(WA);
+
+% Compute the new representation of Y as Wy
+WY = OMP(D, Y, L);
+% WY =full(WY);
+
+% Compute the sparse representation X
+
+Ainv = pinv(A);
+sumTime=0;
+correctSample=0;
+for i = 1: Nt
+    % Inital guess
+    xInit = Ainv * Y(:,i);
+    xp = zeros(Nd,1);
+    
+    % new representation of the test sample y
+    w_y = WY(:,i);
+    
+    % keep columns with a least one overlapped support and dicard the rest
+    [WA_reduced, releventPosition] = reduceMatrix(w_y, WA);
+    
+    % sparse coding: solve a reduced linear system
+    tic
+%     xpReduced = sparse_coding_methods(xInit(releventPosition), WA_reduced, w_y, sc_algo);
+    xpReduced = sparse_coding_methods(xInit(releventPosition), WA_reduced, w_y, sc_algo);
+    t = toc;
+    sumTime = sumTime+t;
+    avgTime = sumTime/Nt;
+
+    xp(releventPosition)=xpReduced;
+   
+    X(:, i) = xp;
+    
+    % Predict label of the test sample
+    residuals = zeros(1,numClass);
+    for iClass = 1: numClass
+        xpClass = xp;
+        xpClass(trainLabel~= iClass) = 0;
+        residuals(iClass) = norm(w_y - WA*xpClass);
+    end
+    [val, ind] = min(residuals);
+    if(ind==testLabel(i))
+        correctSample = correctSample+1;
+    end
+    accuracy = correctSample / i;
+    
+    fprintf('Accuracy = %f %%, speed = %f s\n', accuracy*100, avgTime);
+end
+
+avgTime=sumTime/Nt;
+
+end
